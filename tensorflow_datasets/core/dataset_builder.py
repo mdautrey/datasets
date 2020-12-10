@@ -946,12 +946,11 @@ class FileReaderBuilder(DatasetBuilder):
     return tfrecords_reader.Reader(self._data_dir, self._example_specs,
                                    self._file_format)
 
-  def _as_dataset(
-      self,
-      split=splits_lib.Split.TRAIN,
-      decoders=None,
-      read_config=None,
-      shuffle_files=False):
+  def _as_dataset(self,
+                  split=splits_lib.Split.TRAIN,
+                  decoders=None,
+                  read_config=None,
+                  shuffle_files=False):
     ds = self._tfrecords_reader.read(
         name=self.name,
         instructions=split,
@@ -961,7 +960,9 @@ class FileReaderBuilder(DatasetBuilder):
     )
     decode_fn = functools.partial(
         self.info.features.decode_example, decoders=decoders)
-    ds = ds.map(decode_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    assert read_config is not None, "read_config should never be None"
+    ds = ds.map(
+        decode_fn, num_parallel_calls=read_config.num_parallel_calls_for_decode)
     return ds
 
 
